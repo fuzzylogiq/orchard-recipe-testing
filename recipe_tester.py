@@ -26,8 +26,9 @@ import plistlib
 import sys
 import time
 import argparse
+from os.path import split, splitext
 
-DEFAULT_RECIPE = '/Users/ouit0354/Developer/recipe_checker/Github.munki.recipe'
+# Debug
 
 
 class ResultError(Exception):
@@ -35,6 +36,7 @@ class ResultError(Exception):
 
 
 class Tester(object):
+    ''' Base Tester class that runs assertions, collates and outputs results '''
 
     def __init__(self):
         self._passes = []
@@ -53,31 +55,39 @@ class Tester(object):
             code = 'fail'
         return (code, msg)
 
-    def assertDictContains(self, aDict, keyList, notBlank=False,
-                           expectedValue=None, severity="fail"):
-        ''' Asserts whether keyList is present in nested aDict '''
+    def assertDictContains(self, aDict, keyPath, notBlank=False,
+                           expectedValue="", severity="fail"):
+        ''' Asserts whether keyPath is present in (nested) aDict.
+        Additionally can check if it has an expected value or is not blank'''
         msg = ""
-        keyFound = False
+        result = False
         # Could be None
         if aDict:
-            for key in keyList:
+            for key in keyPath:
                 if key in aDict:
-                    keyFound = True
                     if isinstance(aDict[key], dict):
                         aDict = aDict[key]
+                    else:
+                        result = True
                 else:
-                    keyFound = False
-                    msg = "Key %s not found" % keyList
-            if (keyFound and expectedValue is not None and
-                    aDict[keyList[-1]] != expectedValue):
-                keyFound = False
-                msg = "Key found but does not have expected value %s" % expectedValue
-            if keyFound and notBlank and aDict[keyList[-1]] == "":
-                keyFound = False
+                    msg = "Key %s not found" % keyPath
+        if result:
+            value = aDict[keyPath[-1]]
+            if expectedValue:
+                if isinstance(expectedValue, list) and isinstance(value, list):
+                    if sorted(expectedValue) != sorted(value):
+                        result = False
+                elif value != expectedValue:
+                    result = False
+                if not result:
+                    msg = "Key found but does not have expected value %s" % expectedValue
+            if notBlank and not value:
+                result = False
                 msg = "Key found but is blank"
-        return self._evaluateTest(keyFound, severity, msg)
+        return self._evaluateTest(result, severity, msg)
 
     def assertTrue(self, expr, severity="fail"):
+        ''' Asserts Truth of expression '''
         result = expr
         msg = ""
         if not result:
@@ -132,17 +142,21 @@ class RecipeTester(Tester):
     def __init__(self, filePath):
         super(RecipeTester, self).__init__()
         self.filePath = filePath
+        self.contents = dict()
         try:
-            self.contents = plistlib.readPlist(self.filePath)
+            with open(self.filePath, 'rb') as f:
+                self.contents = plistlib.readPlist(f)
         except Exception:
-            self.contents = None
+            pass
 
     def _runTests(self, stream=sys.stdout):
         stream.write('Testing recipe file %s:\n' % self.filePath)
         super(RecipeTester, self)._runTests()
 
+class OrchardRecipeTester(RecipeTester):
+
     def test_filename_ends_with_recipe(self):
-        return self.assertTrue(self.filePath.endswith('.recipe'))
+        return self.assertTrue(splitext(self.filePath)[1] == '.recipe')
 
     def test_recipe_is_loaded(self):
         return self.assertTrue(self.contents)
@@ -166,6 +180,20 @@ class RecipeTester(Tester):
         return self.assertDictContains(self.contents,
                                        ['Attribution', 'Author', 'Github'],
                                        notBlank=True)
+
+class OrchardDownloadRecipeTester(OrchardRecipeTester):
+
+    def test_recipe_has_download_extension(self):
+        return self.assertTrue(split(self.filePath)[1].split('.')[-2] == 'download')
+
+    def test_contains_end_of_check_phase_processor(self):
+        pass
+
+
+class OrchardMunkiRecipeTester(OrchardRecipeTester):
+
+    def test_recipe_has_munki_extension(self):
+        return self.assertTrue(split(self.filePath)[1].split('.')[-2] == 'munki')
 
     def test_input_pkginfo_category_not_blank(self):
         return self.assertDictContains(self.contents,
@@ -200,7 +228,7 @@ class RecipeTester(Tester):
     def test_input_pkginfo_catalogs_has_expected_value(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'catalogs'],
-                                       expectedValue=['testing'],
+                                       expectedValue=['testing',],
                                        severity="warn")
 
     def test_input_pkginfo_unattended_install_has_expected_value(self):
@@ -218,7 +246,11 @@ if __name__ == '__main__':
                         help='at least one autopkg recipe file')
     args = parser.parse_args()
     for recipe in args.recipe[0]:
-        rt = RecipeTester(recipe)
+        _, recipeFile = split(recipe)
+        if recipeFile.split('.')[-2] == 'munki':
+            rt = OrchardMunkiRecipeTester(recipe)
+        else:
+            rt = OrchardRecipeTester(recipe)
         rt()
         if rt._fails:
             fails += 1

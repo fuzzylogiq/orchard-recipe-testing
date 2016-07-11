@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # encoding: utf-8
-"""
+'''
 recipe_tester.py
 
 Module for testing autopkg recipes
@@ -20,13 +20,14 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+'''
 
 import plistlib
 import sys
 import time
 import argparse
 from os.path import split, splitext
+import re
 
 # Debug
 
@@ -36,7 +37,9 @@ class ResultError(Exception):
 
 
 class Tester(object):
-    ''' Base Tester class that runs assertions, collates and outputs results '''
+    '''
+    Base Tester class that runs assertions, collates and outputs results
+    '''
 
     def __init__(self):
         self._passes = []
@@ -55,11 +58,13 @@ class Tester(object):
             code = 'fail'
         return (code, msg)
 
-    def assertDictContains(self, aDict, keyPath, notBlank=False,
-                           expectedValue="", severity="fail"):
-        ''' Asserts whether keyPath is present in (nested) aDict.
-        Additionally can check if it has an expected value or is not blank'''
-        msg = ""
+    def assertDictContains(self, aDict, keyPath,
+                           expectedValue=None, severity='fail'):
+        '''
+        Asserts whether keyPath is present in (nested) aDict.
+        Additionally can check if it has an expected value
+        '''
+        msg = ''
         result = False
         # Could be None
         if aDict:
@@ -70,33 +75,32 @@ class Tester(object):
                     else:
                         result = True
                 else:
-                    msg = "Key %s not found" % keyPath
+                    msg = 'Key %s not found' % keyPath
+
         if result:
             value = aDict[keyPath[-1]]
             if expectedValue:
-                if isinstance(expectedValue, list) and isinstance(value, list):
-                    if sorted(expectedValue) != sorted(value):
+                if isinstance(expectedValue, str):
+                    if not re.match(expectedValue, value):
                         result = False
-                elif value != expectedValue:
+                elif expectedValue != value:
                     result = False
                 if not result:
-                    msg = "Key found but does not have expected value %s" % expectedValue
-            if notBlank and not value:
-                result = False
-                msg = "Key found but is blank"
+                    msg = 'Key found but does not have expected value %s' % expectedValue
+
         return self._evaluateTest(result, severity, msg)
 
-    def assertTrue(self, expr, severity="fail"):
+    def assertTrue(self, expr, severity='fail'):
         ''' Asserts Truth of expression '''
         result = expr
-        msg = ""
+        msg = ''
         if not result:
-            msg = "%s is not True" % result
+            msg = '%s is not True' % result
         return self._evaluateTest(result, severity, msg)
 
     def _runTests(self, stream=sys.stdout):
-        header = "=" * 70 + "\n"
-        separator = "-" * 70 + "\n"
+        header = '=' * 70 + '\n'
+        separator = '-' * 70 + '\n'
         tests = [f for f in dir(self) if f.startswith('test')]
         startTime = time.time()
         for test in tests:
@@ -127,7 +131,7 @@ class Tester(object):
                 stream.write('WARN: %s\n-- Reason: %s\n' % (test, msg))
                 stream.write(separator)
         stream.write(
-            "Ran %d tests in %.4f seconds.\n\n" % (len(tests), timeTaken)
+            'Ran %d tests in %.4f seconds.\n\n' % (len(tests), timeTaken)
         )
         if self._fails:
             stream.write('FAILED (failures=%d)\n' % len(self._fails))
@@ -153,6 +157,7 @@ class RecipeTester(Tester):
         stream.write('Testing recipe file %s:\n' % self.filePath)
         super(RecipeTester, self)._runTests()
 
+
 class OrchardRecipeTester(RecipeTester):
 
     def test_filename_ends_with_recipe(self):
@@ -164,22 +169,23 @@ class OrchardRecipeTester(RecipeTester):
     def test_attribution_copyright_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Attribution', 'Copyright'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_attribution_author_name_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Attribution', 'Author', 'Name'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_attribution_author_email_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Attribution', 'Author', 'Email'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_attribution_author_github_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Attribution', 'Author', 'Github'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
+
 
 class OrchardDownloadRecipeTester(OrchardRecipeTester):
 
@@ -198,44 +204,44 @@ class OrchardMunkiRecipeTester(OrchardRecipeTester):
     def test_input_pkginfo_category_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'category'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_input_pkginfo_description_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'description'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_input_pkginfo_developer_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'developer'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_input_pkginfo_name_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'name'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_input_pkginfo_display_name_not_blank(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'display_name'],
-                                       notBlank=True)
+                                       expectedValue=r'[^()]')
 
     def test_input_munki_repo_subdir_has_expected_value(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'MUNKI_REPO_SUBDIR'],
-                                       expectedValue="%NAME%")
+                                       expectedValue=r'^%NAME%$')
 
     def test_input_pkginfo_catalogs_has_expected_value(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'catalogs'],
-                                       expectedValue=['testing',],
-                                       severity="warn")
+                                       expectedValue=['testing', ],
+                                       severity='warn')
 
     def test_input_pkginfo_unattended_install_has_expected_value(self):
         return self.assertDictContains(self.contents,
                                        ['Input', 'pkginfo', 'unattended_install'],
                                        expectedValue=True,
-                                       severity="warn")
+                                       severity='warn')
 
 
 if __name__ == '__main__':

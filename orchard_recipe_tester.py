@@ -26,8 +26,11 @@ import argparse
 from os.path import split
 import sys
 
-class OrchardRecipeTester(RecipeTester):
 
+class OrchardRecipeTester(RecipeTester):
+    '''
+    Tests specific to Orchard autopkg recipe standards
+    '''
     def test_filename_ends_with_recipe(self):
         return self.assertTrue(self.getExt() == '.recipe')
 
@@ -56,13 +59,13 @@ class OrchardRecipeTester(RecipeTester):
 
 
 class OrchardDownloadRecipeTester(OrchardRecipeTester):
+        def test_recipe_has_download_extension(self):
+            return self.assertTrue(self.getRecipeType() == '.download')
 
-    def test_recipe_has_download_extension(self):
-        return self.assertTrue(self.getRecipeType() == '.download')
-
-    def test_contains_end_of_check_phase_processor(self):
-        pass
-
+        def test_contains_end_of_check_phase_processor(self):
+            # XXX Not doing anything currently
+            # return self.assertTrue(True)
+            pass
 
 class OrchardMunkiRecipeTester(OrchardRecipeTester):
 
@@ -107,7 +110,8 @@ class OrchardMunkiRecipeTester(OrchardRecipeTester):
 
     def test_input_pkginfo_unattended_install_has_expected_value(self):
         return self.assertDictContains(self.contents,
-                                       ['Input', 'pkginfo', 'unattended_install'],
+                                       ['Input', 'pkginfo',
+                                        'unattended_install'],
                                        expectedValue=True,
                                        severity='warn')
 
@@ -123,6 +127,8 @@ if __name__ == '__main__':
         _, recipeFile = split(recipe)
         if recipeFile.split('.')[-2] == 'munki':
             rt = OrchardMunkiRecipeTester(recipe)
+        elif recipeFile.split('.')[-2] == 'download':
+            rt = OrchardDownloadRecipeTester(recipe)
         else:
             rt = OrchardRecipeTester(recipe)
         rt()

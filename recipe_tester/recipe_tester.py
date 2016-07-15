@@ -26,12 +26,16 @@ import plistlib
 import sys
 from os.path import splitext
 
+
 class RecipeTester(Tester):
     '''
     Extends Tester Class with methods for AutoPkg recipes
     '''
 
     def __init__(self, filePath):
+        '''
+        Adds further initialisation specific to Autopkg recipes
+        '''
         super(RecipeTester, self).__init__()
         self.filePath = filePath
         self.contents = dict()
@@ -42,14 +46,23 @@ class RecipeTester(Tester):
             pass
 
     def _runTests(self, stream=sys.stdout):
+        '''
+        Adds further configuration for Autopkg recipes
+        '''
         stream.write('Testing recipe file %s:\n' % self.filePath)
         super(RecipeTester, self)._runTests()
 
     def getExt(self):
+        '''
+        Returns a file extension from a path
+        '''
         _, ext = splitext(self.filePath)
         return ext
 
     def getRecipeType(self):
+        '''
+        Returns a recipe type from a path (e.g. `.munki` or `.pkg`)
+        '''
         fileName, _ = splitext(self.filePath)
         _, recipeType = splitext(fileName)
         return recipeType

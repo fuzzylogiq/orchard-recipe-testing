@@ -70,59 +70,59 @@ class Tester(object):
             code = 'fail'
         return (code, msg)
 
-    def _returnNestedValue(self, aDict, keyPath):
-        for key in keyPath:
-            if key in aDict:
-                aDict = aDict[key]
-            else:
-                return None
-        return aDict
+    # def _returnNestedValue(self, aDict, keyPath):
+        # for key in keyPath:
+            # if key in aDict:
+                # aDict = aDict[key]
+            # else:
+                # return None
+        # return aDict
 
-    def _findValueInList(self, aList, keyPath, expectedValue):
-        for item in aList:
-            if keyPath:
-                if isinstance(item, dict):
-                    item = self._returnNestedValue(item, keyPath)
-            else:
-                if item == expectedValue:
-                    return True
-        return False
+    # def _findValueInList(self, aList, keyPath, expectedValue):
+        # for item in aList:
+            # if keyPath:
+                # if isinstance(item, dict):
+                    # item = self._returnNestedValue(item, keyPath)
+            # else:
+                # if item == expectedValue:
+                    # return True
+        # return False
 
-    # def assertDictContains(self, aDict, keyPath,
-                           # expectedValue=None, severity='fail'):
-        # '''
-        # Asserts whether keyPath is present in (possibly nested) aDict.
-        # Additionally can check if the final value matches an expectedValue
-        # If this is a string, it will attempt a regex match, otherwise a
-        # straight comparison will be attempted
-        # '''
-        # msg = ''
-        # result = False
-        # # Could be None
-        # if aDict:
-            # for key in keyPath:
-                # if key in aDict:
-                    # if isinstance(aDict[key], dict):
-                        # aDict = aDict[key]
-                    # else:
-                        # result = True
-                # else:
-                    # msg = 'Key %s not found' % '->'.join(k for k in keyPath)
+    def assertDictContains(self, aDict, keyPath,
+                           expectedValue=None, severity='fail'):
+        '''
+        Asserts whether keyPath is present in (possibly nested) aDict.
+        Additionally can check if the final value matches an expectedValue
+        If this is a string, it will attempt a regex match, otherwise a
+        straight comparison will be attempted
+        '''
+        msg = ''
+        result = False
+        # Could be None
+        if aDict:
+            for key in keyPath:
+                if key in aDict:
+                    if isinstance(aDict[key], dict):
+                        aDict = aDict[key]
+                    else:
+                        result = True
+                else:
+                    msg = 'Key %s not found' % '->'.join(k for k in keyPath)
 
-        # if result:
-            # value = aDict[keyPath[-1]]
-            # if expectedValue:
-                # if isinstance(expectedValue, str):
-                    # if not re.match(expectedValue, value):
-                        # result = False
-                # elif expectedValue != value:
-                    # result = False
-                # if not result:
-                    # msg = 'Key %s found but does not match ' \
-                          # 'expected value "%s"' % ('->'.join(k for k in keyPath),
-                                                   # expectedValue)
+        if result:
+            value = aDict[keyPath[-1]]
+            if expectedValue:
+                if isinstance(expectedValue, str):
+                    if not re.match(expectedValue, value):
+                        result = False
+                elif expectedValue != value:
+                    result = False
+                if not result:
+                    msg = 'Key %s found but does not match ' \
+                          'expected value "%s"' % ('->'.join(k for k in keyPath),
+                                                   expectedValue)
 
-        # return self._evaluateTest(result, severity, msg)
+        return self._evaluateTest(result, severity, msg)
 
     def assertTrue(self, expr, severity='fail'):
         ''' Asserts Truth of expression '''

@@ -62,10 +62,6 @@ class OrchardDownloadRecipeTester(OrchardRecipeTester):
         def test_recipe_has_download_extension(self):
             return self.assertTrue(self.getRecipeType() == '.download')
 
-        def test_contains_end_of_check_phase_processor(self):
-            # XXX Not doing anything currently
-            # return self.assertTrue(True)
-            pass
 
 class OrchardMunkiRecipeTester(OrchardRecipeTester):
 

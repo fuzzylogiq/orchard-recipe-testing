@@ -1,5 +1,5 @@
 # orchard-recipe-testing
-Tests to run on recipes submitted to University of Oxford's 'Orchard' AutoPkg repos
+Tests to run on recipes submitted to University of Oxford IT Services 'Orchard' AutoPkg repos
 
 This is an early alpha attempt to create an extensible python framework to test [AutoPkg](https://github.com/autopkg/autopkg) recipes.
 
@@ -32,6 +32,8 @@ recipeFile = '/Users/somebody/Library/AutoPkg/Recipes/Foo/Foo.download.recipe'
 rt = MyAmazingRecipeTester(recipeFile)
 rt()
 ```
+
+See the orchard_recipe_tester.py file for an example of how we are using it locally to test recipes on the command line (and in Travis CI)
 
 TODO:
 

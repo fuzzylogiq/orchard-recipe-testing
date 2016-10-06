@@ -1,5 +1,5 @@
 # orchard-recipe-testing
-Tests to run on recipes submitted to University of Oxford IT Services 'Orchard' AutoPkg repos
+Tests to run on recipes submitted to Orchard's (University of Oxford IT Services Apple management programme) AutoPkg repos
 
 This is an early alpha attempt to create an extensible python framework to test [AutoPkg](https://github.com/autopkg/autopkg) recipes.
 
